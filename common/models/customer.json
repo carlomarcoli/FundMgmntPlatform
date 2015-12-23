@@ -1,11 +1,15 @@
 {
-  "name": "Order",
-  "base": "Model",
+  "name": "Customer",
+  "base": "User",
   "idInjection": true,
   "options": {
     "validateUpsert": true
   },
-  "properties": {},
+  "properties": {
+    "investorId": {
+      "type": "string"
+    }
+  },
   "validations": [],
   "relations": {
   },

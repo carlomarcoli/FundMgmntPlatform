@@ -7,84 +7,119 @@
     "name": "InvestorAccounts",
     "connector": "rest",
     "headers": {
-  "accept": "application/json",
-  "content-type": "application/json"
-},
+      "accept": "application/json",
+      "content-type": "application/json"
+    },
     "operations": [
-
       {
         "template": {
           "method": "GET",
           "url": "http://chtest.eu-gb.mybluemix.net/api/InvestorAccounts/{investorAccountId}"
         },
         "functions": {
-          "getInvestorAccounts": ["investorAccountId"]
+          "getInvestorAccounts": [
+            "investorAccountId"
+          ]
         }
       },
-
       {
         "template": {
           "method": "POST",
           "url": "http://chtest.eu-gb.mybluemix.net/api/Payments",
-
-        "body": {
+          "body": {
             "amount": "{amount}",
             "transactionType": "{transactionType}",
             "currency": "{currency}",
             "date": "{theDate}"
           }
         },
-
         "functions": {
-            "makePayment": ["amount", "transactionType", "currency", "theDate"]
+          "makePayment": [
+            "amount",
+            "transactionType",
+            "currency",
+            "theDate"
+          ]
         }
       },
-
       {
         "template": {
           "method": "PUT",
           "url": "http://chtest.eu-gb.mybluemix.net/api/TradingAccounts/{tradingAccountId}",
-
-        "body": {
+          "body": {
             "balance": "{balance}",
             "tradingAccountId": "{tradingAccountId}",
             "investorAccountId": "{investorAccountId}"
           }
         },
-
         "functions": {
-            "updateTradingAccount": ["balance", "tradingAccountId", "investorAccountId"]
+          "updateTradingAccount": [
+            "balance",
+            "tradingAccountId",
+            "investorAccountId"
+          ]
         }
       },
-
       {
         "template": {
           "method": "POST",
           "url": "http://chtest.eu-gb.mybluemix.net/api/Orders",
-
-        "body": {
+          "body": {
             "fundName": "{fundName}",
             "units": "{units}"
           }
         },
-
         "functions": {
-            "postOrder": ["fundName", "units"]
+          "postOrder": [
+            "fundName",
+            "units"
+          ]
         }
       },
-
       {
         "template": {
           "method": "GET",
           "url": "http://chtest.eu-gb.mybluemix.net/api/TradingAccounts/{tradingAccountid}"
         },
-
         "functions": {
-            "getTradingAccountBalance": ["tradingAccountid"]
+          "getTradingAccountBalance": [
+            "tradingAccountid"
+          ]
         }
-        }
+      }
+    ]
+  },
 
 
+
+  "Customer": {
+    "name": "Customer",
+    "connector": "rest",
+    "headers": {
+      "accept": "application/json",
+      "content-type": "application/json"
+    },
+    "operations": [
+      {
+        "template": {
+          "method": "GET",
+          "url": "http://localhost:3000/api/Customer/{userId}?{token}"
+        },
+        "functions": {
+          "getCustomerProfile": [
+            "userId",
+            "token"
+          ]
+        }
+      }
     ]
   }
+
+
+
+
+
+
+
+
 }

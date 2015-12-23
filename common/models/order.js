@@ -1,7 +1,7 @@
 module.exports = function(Order) {
 
-  Order.submitOrder = function(investorId, noOfUnits, price, product, cb) {
-
+  //Start Submit Order
+  function submitOrder(investorId, noOfUnits, price, product, cback) {
     //Setting up variables
     var response;
     var mockBackEnd = Order.app.dataSources.InvestorAccounts;
@@ -12,86 +12,89 @@ module.exports = function(Order) {
     var tradingAccountId;
     var investorAccountId;
 
-
-    //REST CALL POST to Make a Payment - Using Promises
-    mockBackEnd.makePayment(price, transactionType, currency, todaysDate)
-    .then(function(result){
-      result = JSON.stringify(result);
-        console.log("Make a Payment Success");
-        console.log("The response is " + result);
-    })
-    .catch(function(err){
-   // Called if the operation encounters an error.
-        console.log("Make a Payment Error");
-    });
-
-    //Chain REST CALLs using Promises to  Get Investor Accounts, Get Trading Balance then Update Trading Account
+    //Chain REST CALLs using Promises to  Get Investor Accounts, Get Trading Balance, make payment, then Update Trading Account then place order
     mockBackEnd.getInvestorAccounts(investorId)
     .then(function(result){
           tradingAccountId = result.tradingAccountid;
           investorAccountId = result.id;
           result = JSON.stringify(result);
-          console.log("Get Investor Accounts Success");
-          console.log("The response is " + result);
           return mockBackEnd.getTradingAccountBalance(tradingAccountId);
-
-    }, function(err){
-          console.log("Get Investor Accounts Error");
     }).then(function(tradingAccount){
-          console.log("Balance returned is " + tradingAccount.balance);
           var oldBalance = Number(tradingAccount.balance);
           var newBalance = oldBalance - Number(price);
-          console.log("Old balance is " + oldBalance);
+          if(newBalance < 0) { throw (new Error('Not enough funds - transaction was cancelled'));}
+          console.log('HERE 1');
           balance = newBalance
-          console.log("New balance is " + newBalance);
           tradingAccount = JSON.stringify(tradingAccount);
-          console.log("Get Trading Account Balance Success");
-          console.log("The response is " + tradingAccount);
+          return mockBackEnd.makePayment(price, transactionType, currency, todaysDate)
+    }).then(function(result){
           return mockBackEnd.updateTradingAccount(balance, tradingAccountId, investorAccountId);
-
-    }, function(err){
-          console.log("Get Trading Account Balance Error");
     }).then(function(tradingAccountUpdated) {
           tradingAccountUpdated = JSON.stringify(tradingAccountUpdated);
-          console.log("Update Trading Account Success");
-          console.log("The response is " + tradingAccountUpdated);
-    }, function(err){
-          console.log("Update Trading Account Error " + err);
+          return mockBackEnd.postOrder(product, noOfUnits);
+    }).then(function(result){
+      console.log('HERE 2');
+          cback(null, 'Transaction Complete: Thanks for your order of ' + noOfUnits + ' of ' + product + '. Your new balance is £' + balance);
+    }).catch (function(err){
+            return cback(err, null );
+
     });
 
-    //REST CALL POST to Post Order Using Promises
-    mockBackEnd.postOrder(product, noOfUnits)
-    .then(function(result){
-          result = JSON.stringify(result);
-          console.log("Post Order Success");
-          console.log("The response is " + result);
-    })
-    .catch(function(err){
-   // Called if the operation encounters an error.
-          console.log("Post Order Error");
-    });
+  }; //End Submit Order
 
 
-    //Send the resonse to the remote method
-    response = "Thanks for your order of " + noOfUnits + " Units of " + product;
-    console.log(response);
-    cb(null, response);
+    ///Start Place Order
+    Order.placeOrder = function(token, noOfUnits, price, product, cb) {
 
-  };
-
-  Order.remoteMethod(
-      'submitOrder',
-      {
-        http: {path: '/submitOrder', verb: 'post'},
-        accepts: [
-          {arg: 'investorId', type: 'string'},
-          {arg: 'noOfUnits', type: 'number'},
-          {arg: 'price', type: 'number'},
-          {arg: 'product', type: 'string'}
-                ],
-        returns: {arg: 'orderConfirmation', type: 'string'}
-      }
-    );
+      //Setting up variables
+      var response;
+      var userId;
+      var cust = Order.app.models.Customer;
 
 
-};//END
+     cust.relations.accessTokens.modelTo.findById(token)
+      .then(function(accessToken){
+            if ( ! accessToken)
+                {throw (new Error('Invalid token, please log-on'));}
+            else
+                { return cust.findById(accessToken.userId);}
+      }).then(function(customer){
+            if ( ! customer)
+                {throw (new Error('Unable to lookup profile'));}
+            else
+            {
+              return submitOrder(customer.investorId, noOfUnits, price, product, function(err, result) {
+                  if(err){
+                    cb(err, null);
+                  }
+                  else {
+                    cb(null, result);
+                  }
+                }
+            );
+              }
+      }).catch (function(err){
+            cb(err, null);
+      });
+
+    };//End Place Order
+
+
+    //Set up remote method
+    Order.remoteMethod(
+        'placeOrder',
+        {
+          http: {path: '/placeOrder', verb: 'post'},
+          accepts: [
+            {arg: 'token', type: 'string'},
+            {arg: 'noOfUnits', type: 'number'},
+            {arg: 'price', type: 'number'},
+            {arg: 'product', type: 'string'}
+                  ],
+          returns: {arg: 'response', type: 'string'}
+        }
+      );
+
+
+
+};//End

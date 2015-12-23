@@ -14,7 +14,11 @@
     ]
   },
   "User": {
-    "dataSource": "db"
+    "dataSource": "db",
+    "public": false,
+    "options": {
+      "emailVerificationRequired": false
+    }
   },
   "AccessToken": {
     "dataSource": "db",
@@ -33,6 +37,10 @@
     "public": false
   },
   "Order": {
+    "dataSource": "db",
+    "public": true
+  },
+  "Customer": {
     "dataSource": "db",
     "public": true
   }
