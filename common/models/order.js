@@ -96,5 +96,86 @@ module.exports = function(Order) {
       );
 
 
+      ///Start Get Balance
+      Order.getBalance = function(token, cb) {
+
+        //Setting up variables
+        var response;
+        var userId;
+        var cust = Order.app.models.Customer;
+        var mockBackEnd = Order.app.dataSources.InvestorAccounts;
+        var balance = 0;
+        var tradingAccountId;
+        var investorAccountId;
+
+       cust.relations.accessTokens.modelTo.findById(token)
+        .then(function(accessToken){
+              if ( ! accessToken)
+                  {throw (new Error('Invalid token, please log-on'));}
+              else
+                  { return cust.findById(accessToken.userId);}
+        }).then(function(customer){
+              if ( ! customer)
+                  {throw (new Error('Unable to lookup profile'));}
+              else
+              {
+                  return mockBackEnd.getInvestorAccounts(customer.investorId)
+                }
+        }).then(function(result){
+              tradingAccountId = result.tradingAccountid;
+              investorAccountId = result.id;
+              result = JSON.stringify(result);
+              return mockBackEnd.getTradingAccountBalance(tradingAccountId);
+        }).then(function(result){
+              cb (null, result.balance);
+        }).catch (function(err){
+              cb(err, null);
+        });
+
+      };//End Get Balance
+
+
+      //Set up remote method
+      Order.remoteMethod(
+          'getBalance',
+          {
+            http: {path: '/getBalance', verb: 'post'},
+            accepts: [
+              {arg: 'token', type: 'string'}
+                    ],
+            returns: {arg: 'balance', type: 'string'}
+          }
+        );
+
+
+      ///Start getPastOrders
+      Order.getPastOrders = function(token, cb) {
+
+        //Setting up variables
+        var mockBackEnd = Order.app.dataSources.InvestorAccounts;
+
+       mockBackEnd.getOrders()
+        .then(function(orders){
+            cb(null, orders);
+        }).catch (function(err){
+              cb(err, null);
+        });
+
+      };//End getPastOrders
+
+
+      //Set up remote method
+      Order.remoteMethod(
+          'getPastOrders',
+          {
+            http: {path: '/getPastOrders', verb: 'post'},
+            accepts: [
+              {arg: 'token', type: 'string'}
+                    ],
+            returns: {arg: 'orders', type: 'JSON'}
+          }
+        );
+
+
 
 };//End

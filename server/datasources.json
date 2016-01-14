@@ -86,6 +86,16 @@
             "tradingAccountid"
           ]
         }
+      },
+      {
+        "template": {
+          "method": "GET",
+          "url": "http://chtest.eu-gb.mybluemix.net/api/Orders"
+        },
+        "functions": {
+          "getOrders": [
+          ]
+        }
       }
     ]
   },
